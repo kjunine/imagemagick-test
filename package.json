@@ -1,0 +1,23 @@
+{
+  "name": "imagemagick-test",
+  "version": "0.0.1",
+  "description": "ImageMagick Test",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "bluebird": "^2.2.2",
+    "easyimage": "^1.0.0",
+    "lodash": "^2.4.1",
+    "mime": "^1.2.11",
+    "tmp": "^0.0.24"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": {
+    "name": "Daniel Ku",
+    "email": "kjunine@gmail.com"
+  },
+  "license": "MIT"
+}
