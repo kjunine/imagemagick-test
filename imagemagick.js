@@ -36,7 +36,13 @@ var identify = exports.identify = function(filepath) {
       if (tokens.length > 6) {
         var last = tokens.splice(5);
         _.remove(last, function(token) {
-          return _.contains(['Undefined', 'PixelsPerInch', 'PixelsPerCentimeter'], token);
+          return 'Undefined' === token;
+        });
+        last = _.map(last, function(token) {
+          if ('PixelsPerInch' === token) return 'ppi';
+          if ('PixelsPerCentimeter' === token) return 'ppcm';
+          if ('x' === token) return ' x ';
+          return token;
         });
         tokens.push(last.join(''));
       }
@@ -73,10 +79,13 @@ var identify = exports.identify = function(filepath) {
 exports.convert = function(src, dest) {
   var deferred = Bluebird.defer();
 
-  var args = ['convert'];
-
   var flatten = endsWith(src, '.gif') && !endsWith(dest, '.gif');
   var opaque = endsWith(src, ['.png', '.gif']) && !endsWith(dest, ['.png', '.gif']);
+
+  var args = ['convert'];
+
+  args.push('-density', 72);
+  args.push('-units', 'PixelsPerInch');
 
   args.push(flatten ? src + '[0]' : src);
 

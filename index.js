@@ -49,8 +49,8 @@ var load = function(file) {
       thumbnailFormat: 'jpg'
     })
     .then(function(result) {
-      // console.log(file, '-> target:', result.target.info);
-      // console.log(file, '-> thumbnail:', result.thumbnail.info);
+      console.log(file, '-> target:', result.target.info);
+      console.log(file, '-> thumbnail:', result.thumbnail.info);
 
       return Bluebird.all([
         result.cleaner,
