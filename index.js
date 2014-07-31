@@ -2,6 +2,7 @@
 
 var fs = require('fs'),
     path = require('path'),
+    sprintf = require('sprintf-js').sprintf,
     Bluebird = require('bluebird'),
     PhotoUtil = require('./photo');
 
@@ -37,6 +38,10 @@ var clean = function(file) {
   fs.unlinkSync(file);
 };
 
+var info = function(info) {
+  return sprintf('%4s, %5dx%5d, %d, %2d, %s', info.format, info.width, info.height, info.depth, info.quality, info.density);
+};
+
 var load = function(file) {
   var target = rename(file, '.targets');
   var thumbnail = rename(file, '.thumbnails');
@@ -49,8 +54,8 @@ var load = function(file) {
       thumbnailFormat: 'jpg'
     })
     .then(function(result) {
-      console.log(file, '-> target:', result.target.info);
-      console.log(file, '-> thumbnail:', result.thumbnail.info);
+      console.log(sprintf('%10s -> %9s: %s', path.basename(file), 'target', info(result.target.info)));
+      console.log(sprintf('%10s -> %9s: %s', path.basename(file), 'thumbnail', info(result.thumbnail.info)));
 
       return Bluebird.all([
         result.cleaner,

@@ -24,7 +24,7 @@ var identify = exports.identify = function(filepath) {
 
   // NOTE identity is from imagemagick
   // %m: format, %w: width, %h: height, %b: filesize in byte, %z: depth, %x: density
-  var command = 'identify -format "%m %w %h %b %z %x x %y\\n" "' + filepath + '"';
+  var command = 'identify -format "%m %w %h %b %z %Q %x x %y\\n" "' + filepath + '"';
 
   exec(command, function(err, result) {
     if (err) return deferred.reject(err);
@@ -33,8 +33,8 @@ var identify = exports.identify = function(filepath) {
 
     var infos = _.map(lines, function(line) {
       var tokens = line.split(' ');
-      if (tokens.length > 6) {
-        var last = tokens.splice(5);
+      if (tokens.length >= 6) {
+        var last = tokens.splice(6);
         _.remove(last, function(token) {
           return 'Undefined' === token;
         });
@@ -53,7 +53,8 @@ var identify = exports.identify = function(filepath) {
         height: parseInt(tokens[2]),
         filesize: parseInt(tokens[3]),
         depth: parseInt(tokens[4]),
-        density: tokens[5]
+        quality: parseInt(tokens[5]),
+        density: tokens[6]
       };
     });
 
@@ -66,6 +67,7 @@ var identify = exports.identify = function(filepath) {
       width: _.max(infos, 'width').width,
       height: _.max(infos, 'height').height,
       depth: info.depth,
+      quality: info.quality,
       density: info.density,
       mimetype: mime.lookup(info.format)
     };
@@ -84,18 +86,17 @@ exports.convert = function(src, dest) {
 
   var args = ['convert'];
 
+  args.push(flatten ? src + '[0]' : src);
+
+  args.push('-quality', 50);
   args.push('-density', 72);
   args.push('-units', 'PixelsPerInch');
-
-  args.push(flatten ? src + '[0]' : src);
 
   if (flatten || opaque) args.push('-flatten');
 
   args.push(dest);
 
   var command = args.join(' ');
-
-  console.log('command:', command);
 
   exec(command, function(err) {
     if (err) return deferred.reject(err);

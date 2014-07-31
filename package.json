@@ -9,6 +9,7 @@
     "easyimage": "^1.0.0",
     "lodash": "^2.4.1",
     "mime": "^1.2.11",
+    "sprintf-js": "0.0.7",
     "tmp": "^0.0.24"
   },
   "devDependencies": {},
