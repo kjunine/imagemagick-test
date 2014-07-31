@@ -38,8 +38,18 @@ var clean = function(file) {
   fs.unlinkSync(file);
 };
 
+var size = function(size) {
+  if (size < 1024) {
+    return sprintf('%7f_B', size);
+  } else if (size < 1024 * 1024) {
+    return sprintf('%7.2fKB', size / 1024);
+  } else if (size < 1024 * 1024 * 1024) {
+    return sprintf('%7.2fMB', size / 1024 / 1024);
+  }
+};
+
 var info = function(info) {
-  return sprintf('%4s, %5dx%5d, %d, %2d, %s', info.format, info.width, info.height, info.depth, info.quality, info.density);
+  return sprintf('%4s, %5dx%5d, %s, %d, %3d, %s', info.format, info.width, info.height, size(info.filesize), info.depth, info.quality, info.density);
 };
 
 var load = function(file) {

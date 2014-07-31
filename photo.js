@@ -25,25 +25,13 @@ var createTemporaryFile = function(directory, prefix, format) {
 };
 
 var createTargetImage = function(src, dest, options) {
-  // var quality = options.quality || 75;
-  // var maxWidth = options.maxWidth || 3000;
-  // var maxHeight = options.maxHeight || maxWidth;
-
   return ImageMagick
-    .convert(src, dest);
+    .convert(src, dest, options);
 };
 
 var createThumbnailImage = function(src, dest, options) {
-  // var quality = options.quality || 75;
-  // var cropWidth = options.cropWidth || 1024;
-  // var cropHeight = options.cropHeight || cropWidth;
-  // var cropX = options.cropX || 0;
-  // var cropY = options.cropY || 0;
-  // var maxWidth = options.maxWidth || 128;
-  // var maxHeight = options.maxHeight || maxWidth;
-
   return ImageMagick
-    .convert(src, dest);
+    .convert(src, dest, options);
 };
 
 var deleteFilesWithIgnoringError = function(files) {

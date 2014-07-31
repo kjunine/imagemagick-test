@@ -84,7 +84,16 @@ var identify = exports.identify = function(filepath) {
   return deferred.promise;
 };
 
-exports.convert = function(src, dest) {
+exports.convert = function(src, dest, options) {
+  var quality = options.quality || 75;
+  var density = options.density || 72;
+  // var cropWidth = options.cropWidth || 1024;
+  // var cropHeight = options.cropHeight || cropWidth;
+  // var cropX = options.cropX || 0;
+  // var cropY = options.cropY || 0;
+  // var maxWidth = options.maxWidth || 3000;
+  // var maxHeight = options.maxHeight || maxWidth;
+
   var deferred = Bluebird.defer();
 
   var flatten = endsWith(src, '.gif') && !endsWith(dest, '.gif');
@@ -94,8 +103,8 @@ exports.convert = function(src, dest) {
 
   args.push(flatten ? src + '[0]' : src);
 
-  args.push('-quality', 50);
-  args.push('-density', 72);
+  args.push('-quality', quality);
+  args.push('-density', density);
   args.push('-units', 'PixelsPerInch');
 
   if (flatten || opaque) args.push('-flatten');
@@ -103,6 +112,8 @@ exports.convert = function(src, dest) {
   args.push(dest);
 
   var command = args.join(' ');
+
+  // console.log('command:', command);
 
   exec(command, function(err) {
     if (err) return deferred.reject(err);
