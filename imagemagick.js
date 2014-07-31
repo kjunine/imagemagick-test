@@ -3,6 +3,7 @@
 var _ = require('lodash'),
     Bluebird = require('bluebird'),
     exec = require('child_process').exec,
+    util = require('util'),
     mime = require('mime');
 
 function _endsWith(str, suffix) {
@@ -75,6 +76,7 @@ var identify = exports.identify = function(filepath) {
       depth: info.depth,
       quality: info.quality,
       density: info.density,
+      scenes: lines.length,
       mimetype: mime.lookup(info.format)
     };
 
@@ -87,17 +89,21 @@ var identify = exports.identify = function(filepath) {
 exports.convert = function(src, dest, options) {
   var quality = options.quality || 75;
   var density = options.density || 72;
-  // var cropWidth = options.cropWidth || 1024;
-  // var cropHeight = options.cropHeight || cropWidth;
-  // var cropX = options.cropX || 0;
-  // var cropY = options.cropY || 0;
-  // var maxWidth = options.maxWidth || 3000;
-  // var maxHeight = options.maxHeight || maxWidth;
+  var cropWidth = options.cropWidth;
+  var cropHeight = options.cropHeight || cropWidth;
+  var cropX = options.cropX || 0;
+  var cropY = options.cropY || 0;
+  var maxArea = options.maxArea;
+  var fixedWidth = options.fixedWidth;
+  var fixedHeight = options.fixedHeight || fixedWidth;
+  var maxWidth = options.maxWidth || 3000;
+  var maxHeight = options.maxHeight || maxWidth;
 
   var deferred = Bluebird.defer();
 
   var flatten = endsWith(src, '.gif') && !endsWith(dest, '.gif');
   var opaque = endsWith(src, ['.png', '.gif']) && !endsWith(dest, ['.png', '.gif']);
+  var animated = endsWith(src, '.gif') && endsWith(dest, '.gif');
 
   var args = ['convert'];
 
@@ -108,6 +114,21 @@ exports.convert = function(src, dest, options) {
   args.push('-units', 'PixelsPerInch');
 
   if (flatten || opaque) args.push('-flatten');
+
+  if (cropWidth) {
+    if (animated) args.push('-coalesce', '-repage', '0x0');
+    args.push('-crop',
+      util.format('"%dx%d+%d+%d"', cropWidth, cropHeight, cropX, cropY));
+    if (animated) args.push('+repage');
+  }
+
+  if (maxArea) {
+    args.push('-resize', util.format('"%d@"', maxArea));
+  } else if (fixedWidth) {
+    args.push('-resize', util.format('"%dx%d!"', fixedWidth, fixedHeight));
+  } else {
+    args.push('-resize', util.format('"%dx%d>"', maxWidth, maxHeight));
+  }
 
   args.push(dest);
 

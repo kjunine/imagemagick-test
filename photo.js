@@ -6,12 +6,11 @@ var fs = require('fs'),
     tmp = require('tmp'),
     ImageMagick = require('./imagemagick');
 
-var createTemporaryFile = function(directory, prefix, format) {
+var createTemporaryFile = function(directory, format) {
   var deferred = Bluebird.defer();
 
   var options = {
     dir: directory,
-    prefix: prefix + '.',
     postfix: '.' + format,
     keep: true
   };
@@ -22,16 +21,6 @@ var createTemporaryFile = function(directory, prefix, format) {
   });
 
   return deferred.promise;
-};
-
-var createTargetImage = function(src, dest, options) {
-  return ImageMagick
-    .convert(src, dest, options);
-};
-
-var createThumbnailImage = function(src, dest, options) {
-  return ImageMagick
-    .convert(src, dest, options);
 };
 
 var deleteFilesWithIgnoringError = function(files) {
@@ -63,11 +52,12 @@ var createCleaner = function(originalPath, targetPath, withThumbnail, thumbnailP
 var loadImage = function(original, options) {
   options = options || {};
   var quality = options.quality || 75;
-  var maxWidth = options.maxWidth || 3000;
-  var maxHeight = options.maxHeight || 3000;
+  var density = options.density || 72;
+  var maxArea = options.maxArea || 1000000;
   var withThumbnail = options.withThumbnail || false;
   var thumbnailResolution = options.thumbnailResolution || 128;
   var thumbnailQuality = options.thumbnailQuality || quality;
+  var thumbnailDensity = options.thumbnailDensity || density;
 
   return ImageMagick.identify(original)
     .then(function(info) {
@@ -75,37 +65,39 @@ var loadImage = function(original, options) {
       var format = options.format ?options.format.toLowerCase() : info.format.toLowerCase();
       var thumbnailFormat = options.thumbnailFormat ? options.thumbnailFormat.toLowerCase() : info.format.toLowerCase();
 
+      quality = info.quality ? Math.min(info.quality, quality) : quality;
+      maxArea = info.width * info.height < maxArea ? info.width * info.height : maxArea;
+
       return Bluebird.all([
         info,
-        createTemporaryFile(workingDirectory, 'target', format),
-        createTemporaryFile(workingDirectory, 'thumbnail', thumbnailFormat)
+        createTemporaryFile(workingDirectory, format),
+        createTemporaryFile(workingDirectory, thumbnailFormat)
       ]);
     })
     .spread(function(info, targetPath, thumbnailPath) {
       var all = [
-        createTargetImage(original, targetPath, {
+        ImageMagick.convert(original, targetPath, {
           quality: quality,
-          maxWidth: maxWidth,
-          maxHeight: maxHeight
+          density: density,
+          maxArea: maxArea
         })
       ];
 
       if (withThumbnail) {
-        var width = info.width;
-        var height = info.height;
-        var cropSize = Math.min(width, height);
-        var cropX = cropSize < width ? (width - cropSize) / 2 : 0;
-        var cropY = cropSize < height ? (height - cropSize) / 2 : 0;
+        var cropSize = Math.min(info.width, info.height);
+        var cropX = cropSize < info.width ? (info.width - cropSize) / 2 : 0;
+        var cropY = cropSize < info.height ? (info.height - cropSize) / 2 : 0;
 
         all.push(
-          createThumbnailImage(original, thumbnailPath, {
+          ImageMagick.convert(original, thumbnailPath, {
             quality: thumbnailQuality,
+            density: thumbnailDensity,
             cropWidth: cropSize,
             cropHeight: cropSize,
             cropX: cropX,
             cropY: cropY,
-            maxWidth: thumbnailResolution,
-            maxHeight: thumbnailResolution
+            fixedWidth: thumbnailResolution,
+            fixedHeight: thumbnailResolution
           })
         );
       }

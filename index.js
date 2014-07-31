@@ -49,7 +49,9 @@ var size = function(size) {
 };
 
 var info = function(info) {
-  return sprintf('%4s, %5dx%5d, %s, %d, %3d, %s', info.format, info.width, info.height, size(info.filesize), info.depth, info.quality, info.density);
+  return sprintf('%4s, %5dx%5d, %s, %2d, %d, %3d, %s',
+    info.format, info.width, info.height, size(info.filesize),
+    info.scenes, info.depth, info.quality, info.density);
 };
 
 var load = function(file) {
