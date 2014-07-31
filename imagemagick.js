@@ -19,11 +19,29 @@ function endsWith(str, suffix) {
   return _endsWith(str, suffix);
 }
 
+var handleDensity = function(tokens, densityIndex) {
+  if (tokens.length >= densityIndex) {
+    var last = tokens.splice(densityIndex);
+    _.remove(last, function(token) {
+      return 'Undefined' === token;
+    });
+    last = _.map(last, function(token) {
+      if ('PixelsPerInch' === token) return 'ppi';
+      if ('PixelsPerCentimeter' === token) return 'ppcm';
+      if ('x' === token) return ' x ';
+      return token;
+    });
+    tokens.push(last.join(''));
+  }
+  return tokens;
+};
+
 var identify = exports.identify = function(filepath) {
   var deferred = Bluebird.defer();
 
   // NOTE identity is from imagemagick
-  // %m: format, %w: width, %h: height, %b: filesize in byte, %z: depth, %x: density
+  // %m: format, %w: width, %h: height, %b: filesize in byte, %z: depth,
+  // %Q: quality, %x: x resolution, %y: y resolution
   var command = 'identify -format "%m %w %h %b %z %Q %x x %y\\n" "' + filepath + '"';
 
   exec(command, function(err, result) {
@@ -33,19 +51,7 @@ var identify = exports.identify = function(filepath) {
 
     var infos = _.map(lines, function(line) {
       var tokens = line.split(' ');
-      if (tokens.length >= 6) {
-        var last = tokens.splice(6);
-        _.remove(last, function(token) {
-          return 'Undefined' === token;
-        });
-        last = _.map(last, function(token) {
-          if ('PixelsPerInch' === token) return 'ppi';
-          if ('PixelsPerCentimeter' === token) return 'ppcm';
-          if ('x' === token) return ' x ';
-          return token;
-        });
-        tokens.push(last.join(''));
-      }
+      handleDensity(tokens, 6);
 
       return {
         format: tokens[0],
