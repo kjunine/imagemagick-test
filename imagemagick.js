@@ -134,8 +134,6 @@ exports.convert = function(src, dest, options) {
 
   var command = args.join(' ');
 
-  // console.log('command:', command);
-
   exec(command, function(err) {
     if (err) return deferred.reject(err);
 

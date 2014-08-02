@@ -68,11 +68,16 @@ var loadImage = function(original, options) {
       quality = info.quality ? Math.min(info.quality, quality) : quality;
       maxArea = info.width * info.height < maxArea ? info.width * info.height : maxArea;
 
-      return Bluebird.all([
+      var all = [
         info,
-        createTemporaryFile(workingDirectory, format),
-        createTemporaryFile(workingDirectory, thumbnailFormat)
-      ]);
+        createTemporaryFile(workingDirectory, format)
+      ];
+
+      if (withThumbnail) {
+        all.push(createTemporaryFile(workingDirectory, thumbnailFormat));
+      }
+
+      return all;
     })
     .spread(function(info, targetPath, thumbnailPath) {
       var all = [
@@ -102,25 +107,35 @@ var loadImage = function(original, options) {
         );
       }
 
-      return Bluebird.all(all);
-    })
-    .spread(function(targetInfo, thumbnailInfo) {
-      var result = {
-        target: {
-          info: targetInfo,
-          stream: fs.createReadStream(targetInfo.filepath)
-        },
-        cleaner: createCleaner(original, targetInfo.filepath, withThumbnail, thumbnailInfo.filepath)
-      };
+      return Bluebird.all(all)
+        .spread(function(targetInfo, thumbnailInfo) {
+          var cleaner;
+          if (withThumbnail) {
+            cleaner = createCleaner(original, targetPath, withThumbnail, thumbnailPath);
+          } else {
+            cleaner = createCleaner(original, targetPath);
+          }
 
-      if (withThumbnail) {
-        result.thumbnail = {
-          info: thumbnailInfo,
-          stream: fs.createReadStream(thumbnailInfo.filepath)
-        };
-      }
+          var result = {
+            target: {
+              info: targetInfo,
+              stream: fs.createReadStream(targetInfo.filepath)
+            },
+            cleaner: cleaner
+          };
 
-      return result;
+          if (withThumbnail) {
+            result.thumbnail = {
+              info: thumbnailInfo,
+              stream: fs.createReadStream(thumbnailInfo.filepath)
+            };
+          }
+
+          return result;
+        })
+        .catch(function(err) {
+          throw err;
+        });
     });
 };
 
